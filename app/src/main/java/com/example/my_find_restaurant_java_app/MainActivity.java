@@ -9,6 +9,7 @@ import androidx.core.content.ContextCompat;
 import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
 import android.location.Location;
 import android.location.LocationListener;
@@ -26,10 +27,15 @@ import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import java.io.IOException;
 import java.util.List;
 
+import okhttp3.Call;
+import okhttp3.Callback;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
+import okhttp3.Response;
+
 import android.Manifest;
 
 import com.google.android.gms.location.FusedLocationProviderClient;
@@ -49,6 +55,29 @@ public class MainActivity extends AppCompatActivity {
     //建立分類陣列
     private String[] fruit_name=new String[]{"牛排","麵條","飯","自助餐","咖啡","甜品","都可以"};
     private FusedLocationProviderClient fusedLocationClient;
+
+    //搜索
+    public String pos;
+    public String radius = "500";
+    public String type  = "restaurant";
+    private String api_key ;
+
+    //get MAP_API value
+    private  String getMetaDataFromApp()
+    {
+        String value = "";
+        try {
+            ApplicationInfo appinfo = getPackageManager().getApplicationInfo(getPackageName(),
+                    PackageManager.GET_META_DATA);
+            value = appinfo.metaData.getString("com.google.android.geo.API_KEY");
+        } catch (PackageManager.NameNotFoundException e) {
+            Log.e("main","ERROR to get key");
+            e.printStackTrace();
+        }
+        return  value;
+    }
+
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -74,6 +103,7 @@ public class MainActivity extends AppCompatActivity {
                 if (location != null) {
                     // Logic to handle location object
                     String address = "緯度："+location.getLatitude()+"經度："+location.getLongitude();
+                    pos = location.getLatitude()+","+location.getLongitude();
                     Log.e("main","現在位置:"+address);
                 }
             }
@@ -87,7 +117,7 @@ public class MainActivity extends AppCompatActivity {
         super.onResume();
         Log.e("main","resume");
         //檢查權限，並取得當前位置
-
+        api_key = getMetaDataFromApp();
         //新增一個Adapter
         ArrayAdapter<String> adapter=
                 new ArrayAdapter<String>(this,android.R.layout.simple_list_item_1,fruit_name);//展示地點,格式,字串
@@ -98,22 +128,39 @@ public class MainActivity extends AppCompatActivity {
 
                 //取得有關分類JSON格式的資料
                 //都可以->只要分類是餐廳都拿回來
-               /* if(fruit_name[position].equals("都可以"))
+                Request request;
+                if(fruit_name[position].equals("都可以"))
                 {
 
-                    Request request = new Request.Builder()
-                            .url("https://maps.googleapis.com/maps/api/place/nearbysearch/json")
+                     request = new Request.Builder()
+                            .url("https://maps.googleapis.com/maps/api/place/nearbysearch/json?location="+pos+"&radius="+radius+"&type="+type+"&keyword="+"餐廳"+"&key="+api_key)
                             .build();
                 }
                 else
                 {
-                    Request request = new Request.Builder()
-                            .url("https://maps.googleapis.com/maps/api/place/nearbysearch/json")
+                     request = new Request.Builder()
+                            .url("https://maps.googleapis.com/maps/api/place/nearbysearch/json?location="+pos+"&radius="+radius+"&type="+type+"&keyword="+"餐廳+"+fruit_name[position]+"&key="+api_key)
                             .build();
-                }*/
-                Intent intent = new Intent(MainActivity.this,MapsActivity.class);
+                }
+                Call call = client.newCall(request);
+                call.enqueue(new Callback() {
+                    @Override
+                    public void onResponse(Call call, Response response) throws IOException {
+                        // 連線成功，自response取得連線結果
+                        String result = response.body().string();
+                        Log.e("OkHttp result", result);
+                    }
+
+                    @Override
+                    public void onFailure(Call call, IOException e) {
+                        // 連線失敗
+
+                    }
+                });
+
+                /*Intent intent = new Intent(MainActivity.this,MapsActivity.class);
                 intent.putExtra("targeting",fruit_name[position]);
-                startActivity(intent);
+                startActivity(intent);*/
             }
         });
 
