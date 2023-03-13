@@ -3,11 +3,6 @@
     <string name="title_activity_maps">MapsActivity</string>
     <!--對應ROW-->
     <string-array name="row">
-        <item>是一種小型的法式甜點，表層則是硬脆又厚實的褐色焦糖外殼，內部是半融化狀的蛋糕糊，散發著酒香和香草味。</item>
-        <item>是一種用色彩繽紛絢麗的法國甜品，外殼堅硬但易碎，內陷黏稠扎實</item>
-        <item>是一種傳統的貝殼形狀的小蛋糕，來自於法國東北部洛林大區的兩個市鎮科梅爾西和利韋爾丹。</item>
-        <item>是一種源自法國的甜品，經烘焙後質感輕而蓬鬆。</item>
-        <item>是一種源自法國的球形糕點，蓬鬆張孔的麵皮中包裹鮮奶油、巧克力乃至冰淇淋。</item>
 
     </string-array>
 </resources>

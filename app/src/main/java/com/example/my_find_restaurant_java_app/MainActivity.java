@@ -2,6 +2,7 @@ package com.example.my_find_restaurant_java_app;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.annotation.RequiresPermission;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
@@ -28,6 +29,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import java.io.IOException;
+import java.lang.reflect.Type;
 import java.util.List;
 
 import okhttp3.Call;
@@ -41,6 +43,13 @@ import android.Manifest;
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.gson.Gson;
+import com.google.gson.JsonObject;
+import com.google.gson.reflect.TypeToken;
+
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -53,7 +62,7 @@ public class MainActivity extends AppCompatActivity {
     private String provider;
     public  List<String> list;
     //建立分類陣列
-    private String[] fruit_name=new String[]{"牛排","麵條","飯","自助餐","咖啡","甜品","都可以"};
+    private String[] search_name=new String[]{"牛排","麵條","飯","自助餐","咖啡","甜品","都可以"};
     private FusedLocationProviderClient fusedLocationClient;
 
     //搜索
@@ -95,7 +104,7 @@ public class MainActivity extends AppCompatActivity {
         //取定位服務
         locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
         list = locationManager.getProviders(true);
-        fusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
+
         //監聽位置
         locationListener = new LocationListener() {
             @Override
@@ -107,10 +116,19 @@ public class MainActivity extends AppCompatActivity {
                     Log.e("main","現在位置:"+address);
                 }
             }
+            @Override
+            public void onProviderEnabled(String provider) {
+                Log.e("main","開始服務");
+            }
+            @Override
+            public void onProviderDisabled(String provider) {
+                Log.e("main","未開始服務");
+            }
         };
 
         //startActivity(intent);
     }
+
     @Override
     protected  void onResume()
     {
@@ -118,18 +136,24 @@ public class MainActivity extends AppCompatActivity {
         Log.e("main","resume");
         //檢查權限，並取得當前位置
         api_key = getMetaDataFromApp();
+
         //新增一個Adapter
+
+
         ArrayAdapter<String> adapter=
-                new ArrayAdapter<String>(this,android.R.layout.simple_list_item_1,fruit_name);//展示地點,格式,字串
+                new ArrayAdapter<String>(this,android.R.layout.simple_list_item_1,search_name);//展示地點,格式,字串
         lvShow.setAdapter(adapter);
         lvShow.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @RequiresPermission(Manifest.permission.ACCESS_FINE_LOCATION)
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+
 
                 //取得有關分類JSON格式的資料
                 //都可以->只要分類是餐廳都拿回來
                 Request request;
-                if(fruit_name[position].equals("都可以"))
+                //search by using Place Search API
+                if(search_name[position].equals("都可以"))
                 {
 
                      request = new Request.Builder()
@@ -139,7 +163,7 @@ public class MainActivity extends AppCompatActivity {
                 else
                 {
                      request = new Request.Builder()
-                            .url("https://maps.googleapis.com/maps/api/place/nearbysearch/json?location="+pos+"&radius="+radius+"&type="+type+"&keyword="+"餐廳+"+fruit_name[position]+"&key="+api_key)
+                            .url("https://maps.googleapis.com/maps/api/place/nearbysearch/json?location="+pos+"&radius="+radius+"&type="+type+"&keyword="+"餐廳+"+search_name[position]+"&key="+api_key)
                             .build();
                 }
                 Call call = client.newCall(request);
@@ -148,7 +172,35 @@ public class MainActivity extends AppCompatActivity {
                     public void onResponse(Call call, Response response) throws IOException {
                         // 連線成功，自response取得連線結果
                         String result = response.body().string();
-                        Log.e("OkHttp result", result);
+                        JSONObject Jobject = null;
+                        //String to json
+                        try {
+                            Jobject = new JSONObject(result);
+                            //Log.e("GSON result", Jobject.get("results").toString());
+                            JSONArray Jarray = Jobject.getJSONArray("results");
+                            //show result if there are at least one
+                            for (int i = 0; i < Jarray.length(); i++) {
+                                JSONObject object     = Jarray.getJSONObject(i);
+                                //Log.e("test",object.toString());
+                            }
+                            if(Jarray.length() > 0)
+                            {
+                                Log.e("Searching result", "There are total "+ Integer.toString(Jarray.length()) + " results.");
+                                Intent intent = new Intent(MainActivity.this, ShowRestaurantListScreen.class);
+                                intent.putExtra("jsonArray", Jarray.toString());
+                                startActivity(intent);
+                            }
+
+
+                        } catch (JSONException e) {
+                            e.printStackTrace();
+                        }
+                        /*Gson gson = new Gson();
+                        Type type = new TypeToken<List<ContactModel>>(){}.getType();
+                        List<ContactModel> contactList = gson.fromJson(String.valueOf(response.body()),type);
+                        */
+
+
                     }
 
                     @Override
@@ -166,7 +218,7 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
-    @SuppressLint("MissingPermission")
+    @RequiresPermission(Manifest.permission.ACCESS_FINE_LOCATION)
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
@@ -183,13 +235,22 @@ public class MainActivity extends AppCompatActivity {
                 Toast.makeText(this, "請打開GPS定位或網路連線", Toast.LENGTH_LONG).show();
             }
             Log.e("main","現在使用的是:"+provider);
+            provider = LocationManager.NETWORK_PROVIDER;
             //每分鐘更新定位
-            locationManager.requestLocationUpdates(provider,60000,0,locationListener);
-
+            try {
+                Log.e("main","開始更新:"+provider);
+                locationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER,10000,0,locationListener);
+            }
+            catch (Exception e)
+            {
+                Log.e("main","沒有");
+                e.printStackTrace();
+            }
 
 
 
         }
+
     }
     private void getLocal() {
 
