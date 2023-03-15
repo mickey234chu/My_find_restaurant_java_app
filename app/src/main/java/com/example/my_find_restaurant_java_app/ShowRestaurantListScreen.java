@@ -33,21 +33,33 @@ public class ShowRestaurantListScreen extends AppCompatActivity {
     public String[] search_name;
     private FusedLocationProviderClient fusedLocationClient;
     private String jsonArray;
+    //位置記錄
+    public Double[] lat;
+    public Double[] lng;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        //設定展示頁
         setContentView(R.layout.activity_show_restaurant_list_screen);
         lvShow = findViewById(R.id.listview);
+
+        //讀取發過來搜索結果，整理成列表
         Intent intent = getIntent();
         jsonArray = intent.getStringExtra("jsonArray");
         try {
 
             JSONArray array = new JSONArray(jsonArray);
+            //實例化長度
             search_name = new String[array.length()];
+            lat = new Double[array.length()];
+            lng = new Double[array.length()];
             for (int i = 0; i < array.length(); i++) {
                 JSONObject object     = array.getJSONObject(i);
                 search_name[i] = object.getString("name");
-                Log.e("test",search_name[i]);
+                lat[i] = object.getJSONObject("geometry").getJSONObject("location").getDouble("lat");
+                lng[i] = object.getJSONObject("geometry").getJSONObject("location").getDouble("lng");
+                Log.e("test",Double.toString(object.getJSONObject("geometry").getJSONObject("location").getDouble("lat")));
+                Log.e("test",Double.toString(object.getJSONObject("geometry").getJSONObject("location").getDouble("lng")));
             }
 
         } catch (JSONException e) {
@@ -67,12 +79,17 @@ public class ShowRestaurantListScreen extends AppCompatActivity {
         ArrayAdapter<String> adapter=
                 new ArrayAdapter<String>(ShowRestaurantListScreen.this,android.R.layout.simple_list_item_1,search_name);//展示地點,格式,字串
         lvShow.setAdapter(adapter);
-        /*lvShow.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+        lvShow.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @RequiresPermission(Manifest.permission.ACCESS_FINE_LOCATION)
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-
+                //target:按下去後打開地圖，展示選擇的餐廳的位置
+                Intent intent = new Intent(ShowRestaurantListScreen.this, MapsActivity.class);
+                intent.putExtra("targeting",search_name[position]);
+                intent.putExtra("lat",lat[position]);
+                intent.putExtra("lng",lng[position]);
+                startActivity(intent);
             }
-        });*/
+        });
     }
 }

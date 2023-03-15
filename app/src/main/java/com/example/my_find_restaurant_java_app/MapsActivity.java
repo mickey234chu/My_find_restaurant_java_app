@@ -18,13 +18,18 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
     private GoogleMap mMap;
     private ActivityMapsBinding binding;
+    private String restaurant;
+    private Double lat;
+    private Double lng;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         Intent intent = getIntent();
-        String data = intent.getStringExtra("targeting");
-        Log.e("MAP",data);
+        restaurant = intent.getStringExtra("targeting");
+        lat = intent.getDoubleExtra("lat",0);
+        lng = intent.getDoubleExtra("lng",0);
+        Log.e("MAP",restaurant);
         binding = ActivityMapsBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
 
@@ -48,8 +53,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         mMap = googleMap;
 
         // Add a marker in Sydney and move the camera
-        LatLng sydney = new LatLng(-34, 151);
-        mMap.addMarker(new MarkerOptions().position(sydney).title("Marker in Sydney"));
+        LatLng sydney = new LatLng(lat, lng);
+        mMap.addMarker(new MarkerOptions().position(sydney).title(restaurant));
         mMap.moveCamera(CameraUpdateFactory.newLatLng(sydney));
     }
 }
