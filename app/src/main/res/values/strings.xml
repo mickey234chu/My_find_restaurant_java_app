@@ -1,4 +1,8 @@
 <resources>
     <string name="app_name">My_find_restaurant_java_app</string>
     <string name="title_activity_maps">MapsActivity</string>
+    <!--對應ROW-->
+    <string-array name="row">
+
+    </string-array>
 </resources>
