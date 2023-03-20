@@ -7,7 +7,7 @@ android {
     compileSdk 33
 
     defaultConfig {
-        applicationId "com.example.my_find_restaurant_java_app"
+        applicationId "com.my_find_restaurant_java_app"
         minSdk 29
         targetSdk 33
         versionCode 1
