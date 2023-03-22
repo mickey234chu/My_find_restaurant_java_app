@@ -49,12 +49,12 @@ public class ShowRestaurantListScreen extends AppCompatActivity {
         try {
 
             JSONArray array = new JSONArray(jsonArray);
-            //實例化長度
+            //實例化Array=>不然會報錯
             search_name = new String[array.length()];
             lat = new Double[array.length()];
             lng = new Double[array.length()];
             for (int i = 0; i < array.length(); i++) {
-                JSONObject object     = array.getJSONObject(i);
+                JSONObject object  = array.getJSONObject(i);
                 search_name[i] = object.getString("name");
                 lat[i] = object.getJSONObject("geometry").getJSONObject("location").getDouble("lat");
                 lng[i] = object.getJSONObject("geometry").getJSONObject("location").getDouble("lng");
