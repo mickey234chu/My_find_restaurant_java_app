@@ -49,6 +49,7 @@ public class ShowRestaurantListScreen extends AppCompatActivity {
         try {
 
             JSONArray array = new JSONArray(jsonArray);
+            //實例化Array=>不然會報錯
             search_name = new String[array.length()];
             lat = new Double[array.length()];
             lng = new Double[array.length()];
